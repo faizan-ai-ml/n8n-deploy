@@ -1,0 +1,495 @@
+{
+  "name": "1st Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"polished_message\": \"string\",\n  \"services\": [\"string\"],\n  \"lead_score\": \"string\",\n  \"urgency\": \"string\",\n  \"client_reply\": \"string\",\n  \"SummaryForOwner\": \"string\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        864,
+        192
+      ],
+      "id": "08df470c-5761-4021-94df-cbcbaffc96b1",
+      "name": "AI JSON Parser"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "838a9087-2be6-4abe-a1bf-cb66702a0139",
+              "name": "Timestamp ",
+              "value": "={{ $('Clients Sheet').item.json.Timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "f11c2c4a-f2a8-4215-92b1-7034e91067cf",
+              "name": "Full Name ",
+              "value": "={{ $('Clients Sheet').item.json['Full Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "df45e76b-288e-4e28-9598-e0d309b60a1c",
+              "name": "Email ",
+              "value": "={{ $('Clients Sheet').item.json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "83b0d240-e4e2-48b6-b75b-73891f2ef0b4",
+              "name": "Company",
+              "value": "={{ $('Clients Sheet').item.json.Company }}",
+              "type": "string"
+            },
+            {
+              "id": "e101eb15-074f-4929-8a4b-0157cb2d975a",
+              "name": "Requirement",
+              "value": "={{ $('Clients Sheet').item.json.Requirements }}",
+              "type": "string"
+            },
+            {
+              "id": "0acfa835-4308-4971-8f45-43c348e36fae",
+              "name": "Polished Message ",
+              "value": "={{ $json.output.polished_message }}",
+              "type": "string"
+            },
+            {
+              "id": "8f665e44-a922-4433-9ab4-7773734d188e",
+              "name": "Services ",
+              "value": "={{ $json.output.services.join(\", \") }}",
+              "type": "string"
+            },
+            {
+              "id": "7ac8aec3-815b-44d1-a998-bb0894d51350",
+              "name": "Lead Score ",
+              "value": "={{ $json.output.lead_score }}",
+              "type": "string"
+            },
+            {
+              "id": "b7578b70-26ea-4b57-810b-c7bae5f096e0",
+              "name": "Urgency",
+              "value": "={{ $json.output.urgency }}",
+              "type": "string"
+            },
+            {
+              "id": "ca91c957-2311-408d-ba86-ef9cf33c3351",
+              "name": "Client Reply",
+              "value": "={{ $json.output.client_reply }}",
+              "type": "string"
+            },
+            {
+              "id": "6d312f87-ac44-4199-8edb-4df8e0ecd719",
+              "name": "SummaryForOwner ",
+              "value": "={{ $json.output.SummaryForOwner }}",
+              "type": "string"
+            },
+            {
+              "id": "de0026bd-2ba7-44ef-84f3-b1ae33074964",
+              "name": "Status",
+              "value": "={{ 'Pending' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        976,
+        48
+      ],
+      "id": "14eef243-72c5-45c0-b858-f566662de8ac",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a professional business assistant for a service-based company. \nA new client has submitted their details through a form. Your task is to analyze the input and provide structured insights.\n\nClient Information:\n- Name: {{$json[\"Full Name\"]}}\n- Email: {{$json[\"Email\"]}}\n- Phone: {{$json[\"Phone Number\"]}}\n- Company: {{$json[\"Company \"]}}\n- Requirement: {{$json[\"Requirement  \"]}}\n- Additional Message: {{$json[\"Message\"]}}\n\nYour responsibilities:\n\n1. **Polished Message**  \n   Combine the \"Requirement\" and \"Additional Message\" into a single, clear, and professional summary.  \n   - Keep it concise but meaningful.  \n   - Remove unnecessary wording, keep only important facts.  \n\n2. **Services Requested**  \n   Identify the primary service(s) the client is interested in.  \n   - Use the client’s own words, do not restrict to a predefined list.  \n   - Return as an array (e.g., [\"Web Development\", \"UI/UX Design\"]).  \n   - If uncertain, make the best reasonable assumption from context.  \n\n3. **Lead Scoring**  \n   Assign a lead score:  \n   - **High** → Strong intent, clear requirement, or large project.  \n   - **Medium** → Some intent but needs clarification.  \n   - **Low** → Vague inquiry, low effort, or unlikely to convert.  \n\n4. **Urgency Detection**  \n   Determine urgency based on wording:  \n   - **Urgent** → Immediate action required, strong time pressure.  \n   - **Normal** → Standard business timeline, not critical.  \n   - **Exploratory** → Early-stage interest, just exploring options.  \n\n5. **Client Reply**  \n   Draft a polite, professional, short reply (1–3 sentences) addressed to the client.  \n   - Acknowledge their request.  \n   - Express appreciation.  \n   - Confirm that the company will follow up.  \n   - Do NOT mention AI or automation.  \n\n6. **Summary For Owner (MANDATORY)**  \n   Write a short (2–3 sentence) professional summary for the company owner.  \n   - Highlight who the client is (name, company, contact info).  \n   - Mention what service(s) they want.  \n   - Include urgency and lead score.  \n   - This field must always be filled, never left empty.  \n   - If information is missing, write \"No details provided.\" instead.  \n\n---\n\n📌 **Output Format (STRICT JSON)**  \nReturn only valid JSON in this exact structure.  \nNever add extra text, notes, or explanations.  \nNever skip `\"SummaryForOwner\"`.  \n\n{\n  \"polished_message\": \"string\",\n  \"services\": [\"string\",\"string\"], \n  \"lead_score\": \"High|Medium|Low\",\n  \"urgency\": \"Urgent|Normal|Exploratory\",\n  \"client_reply\": \"string\",\n  \"SummaryForOwner\": \"string\"\n}\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        48
+      ],
+      "id": "fe4e541f-235e-447f-a3bf-e42f8e36358d",
+      "name": "AI Agent",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json['Email '] }}",
+        "subject": "Thank you for reaching out!",
+        "emailType": "text",
+        "message": "=Dear {{ $json['Full Name '] }},  \nThank you for sharing your requirements with us. \nWe’ve received the details regarding your request and our team will review them right away.    One of our specialists will get in touch with you shortly to discuss the next steps and ensure we align with your timeline and expectations.    We appreciate your trust in Dafion and look forward to assisting you.  \nBest regards,   \nThe Dafion Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1408,
+        48
+      ],
+      "id": "bd2087c4-d8a1-473d-8bca-5cf489046070",
+      "name": "Mail to Client",
+      "webhookId": "6671bee3-2492-4327-9d01-176c0337c2f1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qIYbS8RbmmqYRf4U",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "faizanonlywork@gmail.com",
+        "subject": "=New Lead Received – {{ $json['Full Name '] }}",
+        "emailType": "text",
+        "message": "=Hello Team,  \nA new client has submitted their request via the form. Here are the details:  \nName: {{ $json['Full Name '] }}\nEmail: {{ $json['Email '] }}\nPhone: {{ $json.Phone }}\nCompany: {{ $json.Company }}\nServices Requested: {{ $json['Services '] }}\nLead Score: {{ $('AI Agent').item.json.output.lead_score }}\nUrgency: {{ $('AI Agent').item.json.output.urgency }}  \nSummary:  {{ $json['SummaryForOwner '] }}\nPlease review this lead and follow up accordingly.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1376,
+        208
+      ],
+      "id": "b5a4893f-076a-4740-affe-888d9118233d",
+      "name": "Mail to Owner",
+      "webhookId": "f90bc3ce-770b-4eed-9bbc-0795823c0148",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qIYbS8RbmmqYRf4U",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1EjT0HCLb3iSx4xCJkHqI3NczrcVQiyMgKRSpysqa-NA",
+          "mode": "list",
+          "cachedResultName": "Clients Form",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1EjT0HCLb3iSx4xCJkHqI3NczrcVQiyMgKRSpysqa-NA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1864324432,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1EjT0HCLb3iSx4xCJkHqI3NczrcVQiyMgKRSpysqa-NA/edit#gid=1864324432"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        464,
+        48
+      ],
+      "id": "1bababc3-68a4-4c49-8e77-bf258d19d4bd",
+      "name": "Clients Sheet",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "frTW7EVTe19LfOG5",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1KafEFpDZWRrVV3qAKyIjdWENa6tcLwyXHMBvCrdigbo",
+          "mode": "list",
+          "cachedResultName": "Company Response",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KafEFpDZWRrVV3qAKyIjdWENa6tcLwyXHMBvCrdigbo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KafEFpDZWRrVV3qAKyIjdWENa6tcLwyXHMBvCrdigbo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp ": "={{ $json['Timestamp '] }}",
+            "Full Name ": "={{ $json['Full Name '] }}",
+            "Company": "={{ $json.Company }}",
+            "Email ": "={{ $json['Email '] }}",
+            "Phone": "={{ $('Clients Sheet').item.json['Phone Number'] }}",
+            "Urgency": "={{ $('AI Agent').item.json.output.urgency }}",
+            "Lead Score ": "={{ $('AI Agent').item.json.output.lead_score }}",
+            "Services ": "={{ $('AI Agent').item.json.output.services }}",
+            "Polished Message ": "={{ $('AI Agent').item.json.output.polished_message }}",
+            "Requirement": "={{ $json.Requirement }}",
+            "Client Reply": "={{ $json['Client Reply'] }}",
+            "SummaryForOwner ": "={{ $json['SummaryForOwner '] }}",
+            "Status": "={{ $json.Status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp ",
+              "displayName": "Timestamp ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name ",
+              "displayName": "Full Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Requirement",
+              "displayName": "Requirement",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Polished Message ",
+              "displayName": "Polished Message ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Services ",
+              "displayName": "Services ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Score ",
+              "displayName": "Lead Score ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Client Reply",
+              "displayName": "Client Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SummaryForOwner ",
+              "displayName": "SummaryForOwner ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1152,
+        48
+      ],
+      "id": "3a40a46b-473b-4342-ae56-4ffdb306cf84",
+      "name": "Company Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yR8M2sal62iP9Dw8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        576,
+        224
+      ],
+      "id": "99113ee3-74c0-4507-b05a-c7f9be0c9b3e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "TdZVRlU5ClZAwqGi",
+          "name": "Unnamed credential"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI JSON Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Company Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clients Sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Sheet": {
+      "main": [
+        [
+          {
+            "node": "Mail to Client",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Mail to Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e5b3e274-b6d9-4a32-b4e8-d4cac65ff547",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "67efd29fa9955a5c03c6a33e3278b55d08d65f630e0fc080517cf1561923eb78"
+  },
+  "id": "GixpqjvPKB4sF50j",
+  "tags": []
+}
